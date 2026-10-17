@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CHICA ANIME · Bot</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+  html, body { overflow: hidden; height: 100%; }
+  body { background: #05010a; color: #fff; position: fixed; inset: 0; touch-action: none; }
+
+  #intro {
+    position: fixed; inset: 0; background: #000; z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; transition: opacity 1.2s ease;
+  }
+  #intro.hide { opacity: 0; pointer-events: none; }
+
+  .intro-title {
+    font-size: clamp(1.8rem, 8vw, 4.5rem); font-weight: 900;
+    letter-spacing: 10px; color: #1a0015; text-align: center;
+    padding: 0 20px; transition: all 0.15s;
+  }
+  .intro-title.on {
+    color: #fff;
+    text-shadow: 0 0 10px #ff1493, 0 0 25px #ff1493, 0 0 50px #ff69b4, 0 0 90px #8b00ff;
+    animation: introGlow 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes introGlow {
+    from { text-shadow: 0 0 10px #ff1493, 0 0 25px #ff69b4, 0 0 50px #ff1493; }
+    to   { text-shadow: 0 0 20px #ff1493, 0 0 50px #ffb6d9, 0 0 100px #8b00ff; }
+  }
+  .intro-sub {
+    font-size: 0.8rem; color: #1a0015; letter-spacing: 6px;
+    margin-top: 18px; text-transform: uppercase; transition: all 0.3s;
+  }
+  .intro-sub.on { color: #ffb6d9; text-shadow: 0 0 12px #ff1493; }
+
+  .enter-btn {
+    margin-top: 60px; padding: 16px 40px;
+    border: 2px solid #ff1493; background: rgba(255,20,147,0.1);
+    color: #fff; font-size: 1rem; letter-spacing: 4px;
+    font-weight: 700; border-radius: 100px; cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 0 0 30px rgba(255,20,147,0.6), inset 0 0 20px rgba(255,20,147,0.2);
+    transition: all 0.3s;
+    animation: enterPulse 2s ease-in-out infinite;
+    backdrop-filter: blur(10px);
+  }
+  @keyframes enterPulse {
+    0%, 100% { box-shadow: 0 0 30px rgba(255,20,147,0.6), inset 0 0 20px rgba(255,20,147,0.2); }
+    50%      { box-shadow: 0 0 60px rgba(255,20,147,1), inset 0 0 30px rgba(255,20,147,0.4); }
+  }
+
+  .top-title {
+    position: fixed; top: 20px; left: 0; right: 0;
+    z-index: 100; text-align: center; pointer-events: none;
+  }
+  .top-title h1 {
+    font-size: clamp(1.2rem, 5.5vw, 2rem);
+    font-weight: 900; letter-spacing: 8px;
+    background: linear-gradient(90deg, #ff69b4, #ff1493, #8b00ff, #ff69b4);
+    background-size: 200% auto;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 15px rgba(255,20,147,0.8));
+    animation: shine 3s linear infinite;
+  }
+  @keyframes shine { to { background-position: 200% center; } }
+  .top-title p {
+    font-size: 0.65rem; letter-spacing: 5px;
+    color: #ffb6d9; margin-top: 6px;
+    text-shadow: 0 0 10px rgba(255,20,147,0.8);
+  }
+
+  #scene { position: fixed; inset: 0; z-index: 1; touch-action: none; }
+
+  .hint {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%); z-index: 100;
+    font-size: 0.65rem; letter-spacing: 3px;
+    color: #ffb6d9; padding: 10px 22px;
+    border: 1px solid rgba(255,20,147,0.4);
+    border-radius: 100px;
+    background: rgba(5,1,10,0.6);
+    backdrop-filter: blur(15px);
+    pointer-events: none;
+    animation: hintPulse 2s ease-in-out infinite;
+  }
+  @keyframes hintPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+  #infoPanel {
+    position: fixed; left: 50%; bottom: 80px;
+    transform: translateX(-50%) translateY(20px);
+    z-index: 60; width: min(90vw, 400px);
+    max-height: 38vh; overflow-y: auto;
+    padding: 18px; border-radius: 20px;
+    background: linear-gradient(135deg, rgba(255,20,147,0.1), rgba(139,0,255,0.06));
+    border: 1px solid rgba(255,20,147,0.4);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 60px rgba(255,20,147,0.3);
+    opacity: 0; pointer-events: none;
+    transition: all 0.5s cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+  #infoPanel.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+  #infoPanel::-webkit-scrollbar { width: 4px; }
+  #infoPanel::-webkit-scrollbar-thumb { background: #ff1493; border-radius: 4px; }
+
+  #infoPanel h2 {
+    font-size: 1rem; letter-spacing: 2px;
+    margin-bottom: 12px; color: #ff69b4;
+    text-shadow: 0 0 15px rgba(255,20,147,0.8);
+    text-align: center;
+  }
+  #infoPanel p { font-size: 0.8rem; color: #ccc; line-height: 1.6; text-align: center; margin-bottom: 10px; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .info-grid .item {
+    padding: 8px; border-radius: 10px;
+    background: rgba(255,20,147,0.08);
+    border: 1px solid rgba(255,20,147,0.2);
+    text-align: center;
+  }
+  .info-grid .item .lbl {
+    color: #ff69b4; font-size: 0.55rem;
+    letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .info-grid .item .val {
+    color: #fff; font-weight: 600;
+    font-size: 0.68rem; word-break: break-all;
+  }
+  .cmd-item {
+    padding: 8px 12px; border-radius: 10px;
+    background: rgba(255,20,147,0.05);
+    border-left: 3px solid #ff1493;
+    margin-bottom: 6px;
+  }
+  .cmd-item .cmd-name {
+    font-family: 'Courier New', monospace;
+    color: #ffb6d9; font-size: 0.72rem; font-weight: 700;
+    text-shadow: 0 0 6px rgba(255,20,147,0.6);
+  }
+  .cmd-item .cmd-desc { color: #aaa; font-size: 0.68rem; line-height: 1.3; margin-top: 2px; }
+  .action-btn {
+    display: block; width: 100%; padding: 11px;
+    margin-top: 8px; border-radius: 100px;
+    text-align: center; text-decoration: none;
+    font-weight: 700; font-size: 0.75rem;
+    letter-spacing: 1.5px;
+    background: linear-gradient(135deg, #ff1493, #8b00ff);
+    color: #fff; box-shadow: 0 0 20px rgba(255,20,147,0.5);
+    transition: all 0.3s;
+  }
+  .action-btn:active { transform: scale(0.97); }
+</style>
+</head>
+<body>
+
+<div id="intro">
+  <div class="intro-title" id="introTitle">CHICA ANIME</div>
+  <div class="intro-sub" id="introSub">by xsxalol</div>
+  <button class="enter-btn" id="enterBtn">▶ TOCA PARA ENTRAR</button>
+</div>
+
+<div class="top-title">
+  <h1>CHICA ANIME</h1>
+  <p>BOT DE DISCORD</p>
+</div>
+
+<div id="scene"></div>
+
+<div class="hint" id="hint">👆 ARRASTRA PARA GIRAR</div>
+
+<div id="infoPanel"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ===== SONIDO INTRO ===== */
+let audioCtx = null;
+
+function initAudio() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playLightSound(delay = 0, pitch = 1200) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime + delay;
+
+  const bufferSize = audioCtx.sampleRate * 0.04;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+  }
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buffer;
+  const noiseGain = audioCtx.createGain();
+  noiseGain.gain.setValueAtTime(0.15, t);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+  noise.connect(noiseGain);
+  noiseGain.connect(audioCtx.destination);
+  noise.start(t);
+
+  const osc = audioCtx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(pitch, t);
+  osc.frequency.exponentialRampToValueAtTime(pitch * 0.5, t + 0.08);
+  const oscGain = audioCtx.createGain();
+  oscGain.gain.setValueAtTime(0.06, t);
+  oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+  osc.connect(oscGain);
+  oscGain.connect(audioCtx.destination);
+  osc.start(t);
+  osc.stop(t + 0.12);
+}
+
+function playNeonHum() {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  osc.type = 'sine'; osc.frequency.value = 60;
+  const osc2 = audioCtx.createOscillator();
+  osc2.type = 'sine'; osc2.frequency.value = 120;
+  const gain = audioCtx.createGain();
+  gain.gain.value = 0.015;
+  osc.connect(gain); osc2.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(); osc2.start();
+  setTimeout(() => {
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+    setTimeout(() => { osc.stop(); osc2.stop(); }, 600);
+  }, 2500);
+}
+
+/* ===== INTRO ===== */
+const intro = document.getElementById('intro');
+const introTitle = document.getElementById('introTitle');
+const introSub = document.getElementById('introSub');
+const enterBtn = document.getElementById('enterBtn');
+
+let introDone = false;
+
+enterBtn.addEventListener('click', async () => {
+  if (introDone) return;
+  introDone = true;
+
+  initAudio();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+  enterBtn.style.opacity = '0';
+  enterBtn.style.pointerEvents = 'none';
+
+  playNeonHum();
+
+  const totalLights = 10;
+  for (let i = 0; i < totalLights; i++) {
+    setTimeout(() => {
+      playLightSound(0, 900 + i * 120);
+      const t = (i + 1) / totalLights;
+      introTitle.style.opacity = t;
+      introTitle.style.color = `rgb(${Math.floor(255 * t)}, ${Math.floor(105 * t)}, ${Math.floor(180 * t)})`;
+      introTitle.style.textShadow = `0 0 ${t * 40}px #ff1493, 0 0 ${t * 80}px #8b00ff`;
+    }, i * 220);
+  }
+
+  setTimeout(() => {
+    introTitle.classList.add('on');
+    introSub.classList.add('on');
+    playLightSound(0, 1800);
+    setTimeout(() => {
+      intro.classList.add('hide');
+      setTimeout(() => intro.remove(), 1400);
+    }, 1000);
+  }, totalLights * 220 + 200);
+});
+
+/* ===== SECCIONES ===== */
+const sections = [
+  {
+    emoji: '🌸', label: 'INICIO', color: 0xff69b4,
+    html: `
+      <h2>🌸 CHICA ANIME</h2>
+      <p>El bot multifunción para tu servidor de Discord.</p>
+      <a class="action-btn" href="https://discord.gg/YXyKg2NQE" target="_blank">💬 UNIRME AL DISCORD</a>
+      <a class="action-btn" style="background:linear-gradient(135deg,#8b00ff,#ff1493);" href="https://discord.com/oauth2/authorize?client_id=1558677512114929734&permissions=8&scope=bot%20applications.commands" target="_blank">➕ INVITAR BOT</a>
+    `
+  },
+  {
+    emoji: '💠', label: 'INFO', color: 0x00d4ff,
+    html: `
+      <h2>💠 Información</h2>
+      <div class="info-grid">
+        <div class="item"><div class="lbl">Nombre</div><div class="val">CHICA ANIME</div></div>
+        <div class="item"><div class="lbl">Creador</div><div class="val">xsxalol</div></div>
+        <div class="item"><div class="lbl">Bot ID</div><div class="val">1558677512...</div></div>
+        <div class="item"><div class="lbl">Mi ID</div><div class="val">1351006361...</div></div>
+      </div>
+    `
+  },
+  {
+    emoji: '⚡', label: 'COMANDOS', color: 0xffb400,
+    html: `
+      <h2>⚡ Comandos</h2>
+      <div class="cmd-item"><div class="cmd-name">!menu</div><div class="cmd-desc">Menú principal</div></div>
+      <div class="cmd-item"><div class="cmd-name">!menu &lt;cat&gt;</div><div class="cmd-desc">Comandos de una categoría</div></div>
+      <div class="cmd-item"><div class="cmd-name">@Bot &lt;msg&gt;</div><div class="cmd-desc">Responde con IA</div></div>
+      <div class="cmd-item"><div class="cmd-name">!ping</div><div class="cmd-desc">Latencia del bot</div></div>
+    `
+  },
+  {
+    emoji: '🎵', label: 'MÚSICA', color: 0x8b00ff,
+    html: `
+      <h2>🎵 Música</h2>
+      <div class="cmd-item"><div class="cmd-name">!play &lt;canción&gt;</div><div class="cmd-desc">Reproduce o agrega a la cola</div></div>
+      <div class="cmd-item"><div class="cmd-name">!pause / !resume</div><div class="cmd-desc">Pausa o reanuda</div></div>
+      <div class="cmd-item"><div class="cmd-name">!skip</div><div class="cmd-desc">Salta la canción</div></div>
+      <div class="cmd-item"><div class="cmd-name">!stop</div><div class="cmd-desc">Detiene y vacía la cola</div></div>
+      <div class="cmd-item"><div class="cmd-name">!cola</div><div class="cmd-desc">Muestra la cola</div></div>
+      <div class="cmd-item"><div class="cmd-name">!salir</div><div class="cmd-desc">Sale del canal</div></div>
+    `
+  },
+  {
+    emoji: '🛡️', label: 'MOD', color: 0xff2d55,
+    html: `
+      <h2>🛡️ Moderación</h2>
+      <div class="cmd-item"><div class="cmd-name">!ban @user</div><div class="cmd-desc">Banea un usuario</div></div>
+      <div class="cmd-item"><div class="cmd-name">!kick @user</div><div class="cmd-desc">Expulsa un usuario</div></div>
+      <div class="cmd-item"><div class="cmd-name">!mute @user &lt;min&gt;</div><div class="cmd-desc">Silencia por X min</div></div>
+      <div class="cmd-item"><div class="cmd-name">!jail @user</div><div class="cmd-desc">Encarcela</div></div>
+      <div class="cmd-item"><div class="cmd-name">!purge &lt;cant&gt;</div><div class="cmd-desc">Borra X mensajes</div></div>
+    `
+  },
+  {
+    emoji: '➕', label: 'INVITAR', color: 0x00ff88,
+    html: `
+      <h2>➕ Invitar</h2>
+      <p>Lleva CHICA ANIME a tu servidor con un solo clic.</p>
+      <a class="action-btn" href="https://discord.com/oauth2/authorize?client_id=1558677512114929734&permissions=8&scope=bot%20applications.commands" target="_blank">➕ INVITAR AHORA</a>
+      <a class="action-btn" style="background:linear-gradient(135deg,#8b00ff,#ff1493);" href="https://discord.gg/YXyKg2NQE" target="_blank">💬 SERVIDOR SOPORTE</a>
+    `
+  }
+];
+
+/* ============================================================
+   ESCENA 3D CON THREE.JS
+   ============================================================ */
+const sceneEl = document.getElementById('scene');
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x05010a, 0.06);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 1.5, 9);
+camera.lookAt(0, 1.5, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+sceneEl.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffb6d9, 0.4));
+
+const pointPink = new THREE.PointLight(0xff1493, 2, 30);
+pointPink.position.set(5, 8, 5);
+scene.add(pointPink);
+
+const pointPurple = new THREE.PointLight(0x8b00ff, 2, 30);
+pointPurple.position.set(-5, 6, -5);
+scene.add(pointPurple);
+
+/* ===== ÁRBOL 3D ===== */
+const treeGroup = new THREE.Group();
+scene.add(treeGroup);
+
+const trunkMat = new THREE.MeshStandardMaterial({
+  color: 0x3a1020,
+  emissive: 0x4a0a20,
+  emissiveIntensity: 0.3,
+  roughness: 0.9
+});
+const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.35, 3, 8), trunkMat);
+trunk.position.y = 1.5;
+treeGroup.add(trunk);
+
+function addBranch(x, y, z, rotZ, rotY, len, radius) {
+  const branch = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius * 0.6, radius, len, 6),
+    trunkMat
+  );
+  branch.position.set(x, y, z);
+  branch.rotation.z = rotZ;
+  branch.rotation.y = rotY;
+  branch.translateY(len / 2);
+  treeGroup.add(branch);
+}
+
+addBranch(-0.1, 2.6, 0, 0.6, 0, 1.8, 0.12);
+addBranch(0.1, 2.6, 0, -0.6, 0, 1.8, 0.12);
+addBranch(0, 2.9, 0.1, 0.2, Math.PI / 2, 1.5, 0.1);
+addBranch(-0.5, 3.4, 0, 0.9, 0, 1.3, 0.08);
+addBranch(0.5, 3.4, 0, -0.9, 0, 1.3, 0.08);
+
+const crownData = [
+  { x: -1.3, y: 4.2, z: 0,    r: 0.9,  color: 0xff69b4 },
+  { x: 1.3,  y: 4.2, z: 0,    r: 0.9,  color: 0xff1493 },
+  { x: -0.6, y: 4.9, z: 0.5,  r: 0.85, color: 0xffb6d9 },
+  { x: 0.6,  y: 4.9, z: -0.5, r: 0.85, color: 0xff69b4 },
+  { x: 0,    y: 5.4, z: 0,    r: 0.75, color: 0xff1493 },
+  { x: 0,    y: 4.5, z: 0.9,  r: 0.7,  color: 0x8b00ff },
+  { x: 0,    y: 4.5, z: -0.9, r: 0.7,  color: 0xff69b4 }
+];
+
+const crowns = [];
+crownData.forEach((c, i) => {
+  const mat = new THREE.MeshStandardMaterial({
+    color: c.color,
+    emissive: c.color,
+    emissiveIntensity: 1.2,
+    transparent: true,
+    opacity: 0.75,
+    roughness: 0.4
+  });
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(c.r, 16, 16), mat);
+  mesh.position.set(c.x, c.y, c.z);
+  mesh.userData.pulseOffset = i * 0.5;
+  treeGroup.add(mesh);
+  crowns.push(mesh);
+});
+
+const sparkleGeo = new THREE.BufferGeometry();
+const sparklePositions = [];
+for (let i = 0; i < 120; i++) {
+  const angle = Math.random() * Math.PI * 2;
+  const radius = Math.random() * 1.5;
+  const y = 4.5 + (Math.random() - 0.5) * 2;
+  sparklePositions.push(
+    Math.cos(angle) * radius * 1.3,
+    y,
+    Math.sin(angle) * radius * 1.3
+  );
+}
+sparkleGeo.setAttribute('position', new THREE.Float32BufferAttribute(sparklePositions, 3));
+const sparkleMat = new THREE.PointsMaterial({
+  color: 0xffd0e6,
+  size: 0.09,
+  transparent: true,
+  opacity: 0.9,
+  blending: THREE.AdditiveBlending
+});
+const sparkles = new THREE.Points(sparkleGeo, sparkleMat);
+treeGroup.add(sparkles);
+
+/* ===== PÉTALOS 3D ===== */
+const petalCount = 200;
+const petalGeo = new THREE.BufferGeometry();
+const petalPositions = new Float32Array(petalCount * 3);
+const petalVelocities = [];
+const petalColors = new Float32Array(petalCount * 3);
+
+for (let i = 0; i < petalCount; i++) {
+  petalPositions[i * 3]     = (Math.random() - 0.5) * 20;
+  petalPositions[i * 3 + 1] = Math.random() * 12;
+  petalPositions[i * 3 + 2] = (Math.random() - 0.5) * 20;
+  petalVelocities.push({
+    y: -(0.008 + Math.random() * 0.02),
+    x: (Math.random() - 0.5) * 0.01,
+    z: (Math.random() - 0.5) * 0.01,
+    phase: Math.random() * Math.PI * 2
+  });
+  const c = new THREE.Color().setHSL(0.92 + Math.random() * 0.05, 0.9, 0.7);
+  petalColors[i * 3]     = c.r;
+  petalColors[i * 3 + 1] = c.g;
+  petalColors[i * 3 + 2] = c.b;
+}
+
+petalGeo.setAttribute('position', new THREE.BufferAttribute(petalPositions, 3));
+petalGeo.setAttribute('color', new THREE.BufferAttribute(petalColors, 3));
+
+const petalMat = new THREE.PointsMaterial({
+  size: 0.14,
+  vertexColors: true,
+  transparent: true,
+  opacity: 0.9,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false
+});
+const petalSystem = new THREE.Points(petalGeo, petalMat);
+scene.add(petalSystem);
+
+/* ===== SECCIONES ALREDEDOR DEL ÁRBOL ===== */
+const orbitRadius = 4.5;
+const sectionObjects = [];
+
+sections.forEach((sec, i) => {
+  const angle = (i / sections.length) * Math.PI * 2;
+  const x = Math.cos(angle) * orbitRadius;
+  const z = Math.sin(angle) * orbitRadius;
+  const y = 2.5;
+
+  const group = new THREE.Group();
+  group.position.set(x, y, z);
+
+  const sphereMat = new THREE.MeshStandardMaterial({
+    color: sec.color,
+    emissive: sec.color,
+    emissiveIntensity: 0.8,
+    transparent: true,
+    opacity: 0.85,
+    roughness: 0.3
+  });
+  const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.55, 24, 24), sphereMat);
+  group.add(sphere);
+
+  const auraMat = new THREE.MeshBasicMaterial({
+    color: sec.color,
+    transparent: true,
+    opacity: 0.15,
+    blending: THREE.AdditiveBlending,
+    side: THREE.BackSide
+  });
+  const aura = new THREE.Mesh(new THREE.SphereGeometry(0.9, 24, 24), auraMat);
+  group.add(aura);
+
+  const emojiCanvas = document.createElement('canvas');
+  emojiCanvas.width = 256; emojiCanvas.height = 256;
+  const cx = emojiCanvas.getContext('2d');
+  cx.font = '160px serif';
+  cx.textAlign = 'center';
+  cx.textBaseline = 'middle';
+  cx.fillText(sec.emoji, 128, 140);
+
+  const texture = new THREE.CanvasTexture(emojiCanvas);
+  const spriteMat = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: false
+  });
+  const sprite = new THREE.Sprite(spriteMat);
+  sprite.scale.set(0.9, 0.9, 1);
+  sprite.position.z = 0.6;
+  group.add(sprite);
+
+  group.userData = {
+    index: i,
+    baseAngle: angle,
+    sphere,
+    aura,
+    sprite,
+    color: sec.color
+  };
+
+  scene.add(group);
+  sectionObjects.push(group);
+});
+
+/* ============================================================
+   INTERACCIÓN CON ARRASTRE
+   ============================================================ */
+let targetRotation = 0;
+let currentRotation = 0;
+let isDragging = false;
+let lastX = 0;
+let lastTime = 0;
+let velocity = 0;
+let autoRotate = true;
+
+const infoPanel = document.getElementById('infoPanel');
+let activeIndex = -1;
+
+function updateActiveSection() {
+  let bestIndex = -1;
+  let bestZ = -Infinity;
+
+  sectionObjects.forEach((obj, i) => {
+    const worldPos = new THREE.Vector3();
+    obj.getWorldPosition(worldPos);
+    if (worldPos.z > bestZ) {
+      bestZ = worldPos.z;
+      bestIndex = i;
+    }
+  });
+
+  if (bestIndex !== activeIndex && bestIndex !== -1) {
+    activeIndex = bestIndex;
+
+    sectionObjects.forEach((obj, i) => {
+      const isActive = i === bestIndex;
+      obj.userData.sphere.material.emissiveIntensity = isActive ? 2.5 : 0.8;
+      obj.userData.aura.material.opacity = isActive ? 0.5 : 0.15;
+      obj.userData.sphere.scale.setScalar(isActive ? 1.3 : 1);
+    });
+
+    infoPanel.innerHTML = sections[bestIndex].html;
+    infoPanel.classList.add('show');
+  }
+}
+
+const canvasEl = renderer.domElement;
+
+canvasEl.addEventListener('pointerdown', (e) => {
+  isDragging = true;
+  lastX = e.clientX;
+  lastTime = performance.now();
+  velocity = 0;
+  autoRotate = false;
+});
+
+window.addEventListener('pointermove', (e) => {
+  if (!isDragging) return;
+  const dx = e.clientX - lastX;
+  const now = performance.now();
+  const dt = now - lastTime;
+
+  targetRotation += dx * 0.008;
+  velocity = dx * 0.008 / (dt / 16);
+  lastX = e.clientX;
+  lastTime = now;
+});
+
+window.addEventListener('pointerup', () => {
+  isDragging = false;
+  velocity *= 0.9;
+});
+
+canvasEl.addEventListener('touchmove', (e) => {
+  if (!isDragging) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  const dx = touch.clientX - lastX;
+  targetRotation += dx * 0.008;
+  lastX = touch.clientX;
+}, { passive: false });
+
+/* ============================================================
+   ANIMACIÓN
+   ============================================================ */
+let clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  const elapsed = clock.getElapsedTime();
+
+  if (autoRotate || !isDragging) {
+    targetRotation += 0.003;
+  }
+
+  if (!isDragging && Math.abs(velocity) > 0.0001) {
+    targetRotation += velocity;
+    velocity *= 0.94;
+  }
+
+  currentRotation += (targetRotation - currentRotation) * 0.08;
+
+  treeGroup.rotation.y = currentRotation;
+  sectionObjects.forEach(obj => {
+    obj.position.x = Math.cos(obj.userData.baseAngle + currentRotation) * orbitRadius;
+    obj.position.z = Math.sin(obj.userData.baseAngle + currentRotation) * orbitRadius;
+    obj.rotation.y = currentRotation;
+  });
+
+  crowns.forEach((c, i) => {
+    const pulse = 1 + Math.sin(elapsed * 2 + c.userData.pulseOffset) * 0.08;
+    c.scale.setScalar(pulse);
+    c.material.emissiveIntensity = 1.0 + Math.sin(elapsed * 3 + c.userData.pulseOffset) * 0.6;
+  });
+
+  sectionObjects.forEach(obj => {
+    obj.userData.aura.rotation.y += 0.01;
+  });
+
+  const positions = petalSystem.geometry.attributes.position.array;
+  for (let i = 0; i < petalCount; i++) {
+    const v = petalVelocities[i];
+    positions[i * 3 + 1] += v.y;
+    positions[i * 3]     += v.x + Math.sin(elapsed + v.phase) * 0.003;
+    positions[i * 3 + 2] += v.z;
+
+    if (positions[i * 3 + 1] < -2) {
+      positions[i * 3 + 1] = 12;
+      positions[i * 3]     = (Math.random() - 0.5) * 20;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
+    }
+  }
+  petalSystem.geometry.attributes.position.needsUpdate = true;
+
+  updateActiveSection();
+
+  renderer.render(scene, camera);
+}
+animate();
+
+/* ============================================================
+   RESIZE
+   ============================================================ */
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+
+</body>
+</html>
